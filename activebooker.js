@@ -1,3 +1,5 @@
+var logImages = true; //set to true to log images at different stages
+
 var fs = require('fs');
 var credentials = JSON.parse(fs.read('credentials.json'));
 
@@ -10,17 +12,24 @@ casper.options.viewportSize = {
 
 casper.start("https://members.myactivesg.com/auth", function() {
 
-    this.echo(this.getTitle());
-    //this.capture('site.png');    
+    console.log("Started...");
+    
+    logImages && this.capture('stage1_login.png');
+    console.log("Currently @ Page : "+this.getCurrentUrl());
+      
     this.fill('form#formSignin', credentials, true);
-
+    
+    logImages && this.capture('stage2_formFilled.png');
+    
     this.click('#btn-submit-login');
 
 });
 
 // wait for the profile page to load
 casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybookings"]', function() {
-    console.log(this.getCurrentUrl());
+    
+    logImages && this.capture('stage3_loggedIn.png');
+    console.log("Currently @ Page : "+this.getCurrentUrl());
 });
 
 //casper.thenOpen('https://members.myactivesg.com/facilities', function() {});
@@ -44,7 +53,10 @@ casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybooking
 
 // shortcut through url
 casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venue/318?time_from=1412438400', function() {
-    this.capture('site.png');
+
+    logImages && this.capture('stage4_slots.png');
+    console.log("Currently @ Page : "+this.getCurrentUrl());
+    
     //select the available slot
     var availableSlots = document.querySelectorAll('input:not([disabled])[name="timeslots[]"]');
     console.log("Available Slots:\n", availableSlots.length);
