@@ -108,10 +108,12 @@ casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venu
     console.log(JSON.stringify(filteredSlots, undefined, 2));
 
     //book courts
-    var targetSlot = filteredSlots[0];
-    this.click("[id='"+targetSlot.id +"']");
-    this.click("[id='"+targetSlot.id +"']");
-                  
+    if(!(typeof filteredSlots[0] === "undefined"))
+    {
+        var targetSlot = filteredSlots[0];
+        this.click("[id='"+targetSlot.id +"']");
+        this.click("[id='"+targetSlot.id +"']");
+    }
 });
 
 casper.thenOpen('https://members.myactivesg.com/cart',function(){
