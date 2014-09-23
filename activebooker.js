@@ -1,5 +1,5 @@
-var bookingTimes = [18, 19, 21]; // hour in 24-hour format , eg: 18 is for 6:00 pm
-var bookingDate = new Date("10/08/2014"); // Note: mm/dd/yyyy
+var bookingTimes = [18, 19]; // hour in 24-hour format , eg: 18 is for 6:00 pm
+var bookingDate = new Date("10/06/2014"); // Note: mm/dd/yyyy
 
 //=============================================================================
 var epochTime = bookingDate.getTime() / 1000;
@@ -61,6 +61,8 @@ casper.start("https://members.myactivesg.com/auth", function() {
     this.click('#btn-submit-login');
 
 });
+
+casper.wait(1000);
 
 // wait for the profile page to load
 casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybookings"]', function() {
@@ -132,6 +134,7 @@ casper.then(function() {
     console.log("Add to cart clicked");
 });
 
+casper.wait(1000);
 
 casper.thenOpen('https://members.myactivesg.com/cart', function() {
     logImages && this.capture('stage5_shoppingCart.png');
@@ -150,8 +153,8 @@ casper.waitForSelector("#payment_mode_1", function() {
 });
 
 casper.then(function() {
-    this.click("input[name='pay']"); //confirm booking
-    console.log("Add to cart clicked");
+    //this.click("input[name='pay']"); //confirm booking
+    console.log("Confirmed booking");
 });
 
 casper.run();
