@@ -1,5 +1,5 @@
-var bookingTimes = [18, 19]; // hour in 24-hour format , eg: 18 is for 6:00 pm
-var bookingDate = new Date("10/05/2014"); // Note: mm/dd/yyyy
+var bookingTimes = [18, 19, 21]; // hour in 24-hour format , eg: 18 is for 6:00 pm
+var bookingDate = new Date("10/08/2014"); // Note: mm/dd/yyyy
 
 //=============================================================================
 var epochTime = bookingDate.getTime() / 1000;
@@ -51,7 +51,10 @@ casper.start("https://members.myactivesg.com/auth", function() {
     logImages && this.capture('stage1_login.png');
     console.log("Currently @ Page : " + this.getCurrentUrl());
 
-    this.fill('form#formSignin', credentials, true);
+    this.fill('form#formSignin', {
+        email: credentials.email,
+        password: credentials.password
+    }, true);
 
     logImages && this.capture('stage2_formFilled.png');
 
@@ -108,17 +111,47 @@ casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venu
     console.log(JSON.stringify(filteredSlots, undefined, 2));
 
     //book courts
-    if(!(typeof filteredSlots[0] === "undefined"))
-    {
+    if (filteredSlots.length > 0) {
         var targetSlot = filteredSlots[0];
-        this.click("[id='"+targetSlot.id +"']");
-        this.click("[id='"+targetSlot.id +"']");
+        this.click("[id='" + targetSlot.id + "']");
+        console.log("Booking clicked :" + targetSlot.id);
+    }
+    else
+    {
+        console.log("Exiting...");
+        casper.exit();
     }
 });
 
-casper.thenOpen('https://members.myactivesg.com/cart',function(){
+casper.waitForSelector("#paynow", function() {
+    logImages && this.capture('test1.png');
+});
+
+casper.then(function() {
+    this.click("#paynow"); //add to cart
+    console.log("Add to cart clicked");
+});
+
+
+casper.thenOpen('https://members.myactivesg.com/cart', function() {
     logImages && this.capture('stage5_shoppingCart.png');
-    console.log("Currently @ Page : " + this.getCurrentUrl());    
+    console.log("Currently @ Page : " + this.getCurrentUrl());
+});
+
+casper.waitForSelector("#payment_mode_1", function() {
+    //select payment mode 
+    this.click("#payment_mode_1");
+    //enter pin
+    for (var i = 0; i < 6; ++i) {
+        this.sendKeys('input.wallet-password:nth-child(' + (i+1) + ')', credentials.pin[i]);
+    }
+    
+    logImages && this.capture('stage6_afterPin.png');
+});
+
+casper.then(function() {
+    this.click("input[name='pay']"); //confirm booking
+    console.log("Add to cart clicked");
 });
 
 casper.run();
