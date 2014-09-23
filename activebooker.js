@@ -1,7 +1,8 @@
-var bookingTime = 18;
-var bookingDate = new Date("10/05/2014");
+var bookingTimes = [18, 19]; // hour in 24-hour format , eg: 18 is for 6:00 pm
+var bookingDate = new Date("10/05/2014"); // Note: mm/dd/yyyy
 
-var epochTime = bookingDate.getTime()/1000; 
+//=============================================================================
+var epochTime = bookingDate.getTime() / 1000;
 var logImages = true; //set to true to log images at different stages
 var fs = require('fs');
 var credentials = JSON.parse(fs.read('credentials.json'));
@@ -84,7 +85,7 @@ casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybooking
 //    this.capture('site.png');    
 //});
 
-// shortcut through url
+// quicker via through url
 casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venue/318?time_from=' + epochTime, function() {
 
     logImages && this.capture('stage4_slots.png');
@@ -94,17 +95,28 @@ casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venu
     //Parse slots info
     var parsedSlots = parseSlots(availableSlots);
     console.log("Parsed Slots : ");
-    console.log(JSON.stringify(parsedSlots,undefined,2));
+    console.log(JSON.stringify(parsedSlots, undefined, 2));
 
     //filter those slots before 8 pm
 
-    var filteredSlots = Array.prototype.filter.call(parsedSlots,function(e) {
+    var filteredSlots = Array.prototype.filter.call(parsedSlots, function(e) {
         var hour = JSON.parse(e.start.split(":")[0]);
-        return (hour === bookingTime);
+        return ((bookingTimes.indexOf(hour)) > (-1));
     });
-    
+
     console.log("Filtered Slots : ");
-    console.log(JSON.stringify(filteredSlots,undefined,2));
+    console.log(JSON.stringify(filteredSlots, undefined, 2));
+
+    //book courts
+    var targetSlot = filteredSlots[0];
+    this.click("[id='"+targetSlot.id +"']");
+    this.click("[id='"+targetSlot.id +"']");
+                  
+});
+
+casper.thenOpen('https://members.myactivesg.com/cart',function(){
+    logImages && this.capture('stage5_shoppingCart.png');
+    console.log("Currently @ Page : " + this.getCurrentUrl());    
 });
 
 casper.run();
