@@ -1,12 +1,15 @@
-var logImages = false; //set to true to log images at different stages
+var bookingTime = 18;
+var bookingDate = new Date("10/05/2014");
 
+var epochTime = bookingDate.getTime()/1000; 
+var logImages = true; //set to true to log images at different stages
 var fs = require('fs');
 var credentials = JSON.parse(fs.read('credentials.json'));
 
 var casper = require('casper').create();
 
 //========================================================
-//********* Evaluate Functions *********
+//********* Utility Functions *********
 
 function getAvailableSlots() {
     //select the available slot
@@ -17,6 +20,22 @@ function getAvailableSlots() {
     });
 }
 
+function parseSlots(availableSlots) {
+    var parsedSlots = [];
+    for (i = 0; i < availableSlots.length; ++i) {
+        var info = availableSlots[i].split(";"); // parse and tokenize the string
+        var slot = {};
+        slot.court = info[0];
+        slot.blah = info[1];
+        slot.id = info[2];
+        slot.start = info[3];
+        slot.end = info[4];
+
+        parsedSlots.push(slot);
+    }
+
+    return parsedSlots;
+}
 //========================================================
 
 casper.options.viewportSize = {
@@ -66,29 +85,26 @@ casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybooking
 //});
 
 // shortcut through url
-casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venue/318?time_from=1412438400', function() {
+casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venue/318?time_from=' + epochTime, function() {
 
     logImages && this.capture('stage4_slots.png');
     console.log("Currently @ Page : " + this.getCurrentUrl());
     var availableSlots = this.evaluate(getAvailableSlots);
-    // Show available slots 
 
-    console.log("Available Slots : ");
-    var parsedSlots = [];
+    //Parse slots info
+    var parsedSlots = parseSlots(availableSlots);
+    console.log("Parsed Slots : ");
+    console.log(JSON.stringify(parsedSlots,undefined,2));
 
-    for (i = 0; i < availableSlots.length; ++i) {
-        var info = availableSlots[i].split(";"); // parse and tokenize the string
-        var slot = {};
-        slot.court = info[0];
-        slot.blah = info[1];
-        slot.id = info[2];
-        slot.start = info[3];
-        slot.end = info[4];
-        
-        parsedSlots.push(slot);
-    }
+    //filter those slots before 8 pm
+
+    var filteredSlots = Array.prototype.filter.call(parsedSlots,function(e) {
+        var hour = JSON.parse(e.start.split(":")[0]);
+        return (hour === bookingTime);
+    });
     
-    console.log(JSON.stringify(parsedSlots));
+    console.log("Filtered Slots : ");
+    console.log(JSON.stringify(filteredSlots,undefined,2));
 });
 
 casper.run();
