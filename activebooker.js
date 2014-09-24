@@ -8,6 +8,7 @@ var fs = require('fs');
 var credentials = JSON.parse(fs.read('credentials.json'));
 
 var casper = require('casper').create();
+casper.options.waitTimeout = 20000; 
 
 //========================================================
 //********* Utility Functions *********
