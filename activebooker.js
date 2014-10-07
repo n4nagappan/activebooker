@@ -1,15 +1,18 @@
 var bookingTimes = [18, 19]; // hour in 24-hour format , eg: 18 is for 6:00 pm
-var bookingDate = new Date("10/06/2014"); // Note: mm/dd/yyyy
+
+var bookingDate = new Date("10/22/2014"); // Note: mm/dd/yyyy
+//var bookingDate = new Date();
+//bookingDate.setDate(bookingDate.getDate() + 14); // add 2 weeks
+console.log("Bookind Date :" + bookingDate);
 
 //=============================================================================
-var epochTime = bookingDate.getTime() / 1000;
+var epochTime = bookingDate.getTime() / 1000 ;
 var logImages = true; //set to true to log images at different stages
 var fs = require('fs');
 var credentials = JSON.parse(fs.read('credentials.json'));
 
 var casper = require('casper').create();
-casper.options.waitTimeout = 20000; 
-
+casper.options.waitTimeout = 25000; 
 //========================================================
 //********* Utility Functions *********
 
@@ -63,8 +66,6 @@ casper.start("https://members.myactivesg.com/auth", function() {
 
 });
 
-casper.wait(1000);
-
 // wait for the profile page to load
 casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybookings"]', function() {
 
@@ -72,29 +73,22 @@ casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybooking
     console.log("Currently @ Page : " + this.getCurrentUrl());
 });
 
-//casper.thenOpen('https://members.myactivesg.com/facilities', function() {});
-//
-//casper.waitForSelector('select[id="activity_filter"]', function() {
-//    console.log(this.getCurrentUrl());
-//    this.capture('site.png');
-//    // fill the order details
-//    this.fill('form#formFacFilter', {
-//        'activity_filter': 18,    // 18 is for badminton. May change in future
-//        'venue_filter': 318,   
-//        'day_filter': 3,    
-//        'date_filter': 'Wed, 1 Oct 2014'
-//    },true);
-//
-//});
-//
-//casper.waitForSelector('h3.timeslot', function() {
-//    this.capture('site.png');    
-//});
+casper.thenOpen('https://members.myactivesg.com/facilities/quick-booking', function() {});
 
-// quicker via through url
-casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venue/318?time_from=' + epochTime, function() {
+casper.waitForSelector('select[id="activity_filter"]', function() {
+    console.log(this.getCurrentUrl());
+    this.capture('site.png');
+    // fill the order details
+    this.fill('form#formQuickBookSearch', {
+        'activity_filter': 18,    // 18 is for badminton. May change in future
+        'venue_filter': 301,   
+        'date_filter': 'Wed, 22 Oct 2014'
+    },true);
 
-    logImages && this.capture('stage4_slots.png');
+});
+
+casper.waitForSelector('.timeslot-container', function() {
+        logImages && this.capture('stage4_slots.png');
     console.log("Currently @ Page : " + this.getCurrentUrl());
     var availableSlots = this.evaluate(getAvailableSlots);
 
@@ -106,7 +100,8 @@ casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venu
     //filter those slots before 8 pm
 
     var filteredSlots = Array.prototype.filter.call(parsedSlots, function(e) {
-        var hour = JSON.parse(e.start.split(":")[0]);
+        console.log(e.start);
+        var hour = parseInt(e.start.split(":")[0]);
         return ((bookingTimes.indexOf(hour)) > (-1));
     });
 
@@ -125,6 +120,11 @@ casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venu
         casper.exit();
     }
 });
+
+//// quicker via through url
+//casper.thenOpen('https://members.myactivesg.com/facilities/view/activity/18/venue/301?time_from=' + epochTime, function() {
+//
+//});
 
 casper.waitForSelector("#paynow", function() {
     logImages && this.capture('test1.png');
@@ -154,8 +154,13 @@ casper.waitForSelector("#payment_mode_1", function() {
 });
 
 casper.then(function() {
-    //this.click("input[name='pay']"); //confirm booking
-    console.log("Confirmed booking");
+    //this.click("input[name='']"); //confirm booking
+    casper.click('input[type="submit"][name="pay"]');
+
 });
 
+casper.waitForSelector("a[href='https://members.myactivesg.com/']", function() {
+    console.log("Confirmed booking");
+    logImages && this.capture('stage7_confirmedBooking.png');    
+});
 casper.run();
