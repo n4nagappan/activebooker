@@ -73,18 +73,42 @@ casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybooking
     console.log("Currently @ Page : " + this.getCurrentUrl());
 });
 
-casper.thenOpen('https://members.myactivesg.com/facilities/quick-booking', function() {});
 
-casper.waitForSelector('select[id="activity_filter"]', function() {
-    console.log(this.getCurrentUrl());
-    this.capture('site.png');
-    // fill the order details
-    this.fill('form#formQuickBookSearch', {
-        'activity_filter': 18,    // 18 is for badminton. May change in future
-        'venue_filter': 301,   
-        'date_filter': 'Wed, 22 Oct 2014'
-    },true);
+var d = new Date();
+console.log(d.getHours());
+if((d.getHours() >= 6) && (d.getHours() <= 8)) // use quick booking during 6-8 am in the morning
+{
+    casper.thenOpen('https://members.myactivesg.com/facilities/quick-booking', function() {});
+    casper.waitForSelector('select[id="activity_filter"]', function() {
+        console.log(this.getCurrentUrl());
+        this.capture('site.png');
+        // fill the order details
+        this.fill('form#formQuickBookSearch', {
+            'activity_filter': 18,    // 18 is for badminton. May change in future
+            'venue_filter': 318,   
+            'date_filter': 'Wed, 22 Oct 2014'
+        },true);
 
+    });
+}
+else
+{
+    casper.thenOpen('https://members.myactivesg.com/facilities', function() {});
+    casper.waitForSelector('select[id="activity_filter"]', function() {
+       console.log(this.getCurrentUrl());
+       // fill the order details
+       this.fill('form#formFacFilter', {
+           'activity_filter': 18,    // 18 is for badminton. May change in future
+           'venue_filter': 318,   
+           'day_filter': 3,    
+           'date_filter': 'Wed, 22 Oct 2014'
+       },true);
+       
+    });
+}
+
+casper.waitForSelector('h3.timeslot', function() {
+   this.capture('timeSlots.png');    
 });
 
 casper.waitForSelector('.timeslot-container', function() {
@@ -155,12 +179,12 @@ casper.waitForSelector("#payment_mode_1", function() {
 
 casper.then(function() {
     //this.click("input[name='']"); //confirm booking
-    casper.click('input[type="submit"][name="pay"]');
+    //casper.click('input[type="submit"][name="pay"]');
 
 });
 
-casper.waitForSelector("a[href='https://members.myactivesg.com/']", function() {
-    console.log("Confirmed booking");
-    logImages && this.capture('stage7_confirmedBooking.png');    
-});
+// casper.waitForSelector("a[href='https://members.myactivesg.com/']", function() {
+    // console.log("Confirmed booking");
+    // logImages && this.capture('stage7_confirmedBooking.png');    
+// });
 casper.run();
