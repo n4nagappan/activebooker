@@ -1,15 +1,23 @@
-var bookingTimes = [18, 19]; // hour in 24-hour format , eg: 18 is for 6:00 pm
 
-var bookingDate = new Date("10/22/2014"); // Note: mm/dd/yyyy
+var fs = require('fs');
+var credentials = JSON.parse(fs.read('credentials.json'));
+var bookingTimes = credentials.bookingTimes; // hour in 24-hour format , eg: 18 is for 6:00 pm
+
+var venue = credentials.venue;
+console.log("venue : "+ venue);
+var bookingDate =  new Date(credentials.bookingDate); // Note: mm/dd/yyyy
+var d_names = new Array("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
+var m_names = new Array("Jan", "Feb", "Mar", 
+"Apr", "May", "Jun", "Jul", "Aug", "Sep", 
+"Oct", "Nov", "Dec");
+
 //var bookingDate = new Date();
 //bookingDate.setDate(bookingDate.getDate() + 14); // add 2 weeks
-console.log("Bookind Date :" + bookingDate);
+console.log("Booking Date :" + bookingDate);
 
 //=============================================================================
 var epochTime = bookingDate.getTime() / 1000 ;
 var logImages = true; //set to true to log images at different stages
-var fs = require('fs');
-var credentials = JSON.parse(fs.read('credentials.json'));
 
 var casper = require('casper').create();
 casper.options.waitTimeout = 25000; 
@@ -81,12 +89,14 @@ if((d.getHours() >= 6) && (d.getHours() <= 8)) // use quick booking during 6-8 a
     casper.thenOpen('https://members.myactivesg.com/facilities/quick-booking', function() {});
     casper.waitForSelector('select[id="activity_filter"]', function() {
         console.log(this.getCurrentUrl());
-        this.capture('site.png');
+        logImages && this.capture('facilitiesPage.png');
+        var formattedDate = bookingDate.getDay() + ', ' + bookingDate.getDate() + ' ' + m_names[bookingDate.getMonth()] + ' ' + bookingDate.getFullYear();
+        //console.log(formattedDate);
         // fill the order details
         this.fill('form#formQuickBookSearch', {
             'activity_filter': 18,    // 18 is for badminton. May change in future
-            'venue_filter': 318,   
-            'date_filter': 'Wed, 22 Oct 2014'
+            'venue_filter': venue,   
+            'date_filter': formattedDate
         },true);
 
     });
@@ -96,12 +106,15 @@ else
     casper.thenOpen('https://members.myactivesg.com/facilities', function() {});
     casper.waitForSelector('select[id="activity_filter"]', function() {
        console.log(this.getCurrentUrl());
+       logImages && this.capture('facilitiesPage.png');
+       var formattedDate = d_names[bookingDate.getDay()] + ', ' + bookingDate.getDate() + ' ' + m_names[bookingDate.getMonth()] + ' ' + bookingDate.getFullYear();
+       //console.log(formattedDate);
        // fill the order details
        this.fill('form#formFacFilter', {
            'activity_filter': 18,    // 18 is for badminton. May change in future
-           'venue_filter': 318,   
-           'day_filter': 3,    
-           'date_filter': 'Wed, 22 Oct 2014'
+           'venue_filter': venue,   
+           'day_filter': bookingDate.getDay(),    
+           'date_filter': formattedDate
        },true);
        
     });
@@ -112,7 +125,7 @@ casper.waitForSelector('h3.timeslot', function() {
 });
 
 casper.waitForSelector('.timeslot-container', function() {
-        logImages && this.capture('stage4_slots.png');
+    logImages && this.capture('stage4_slots.png');
     console.log("Currently @ Page : " + this.getCurrentUrl());
     var availableSlots = this.evaluate(getAvailableSlots);
 
