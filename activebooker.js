@@ -75,7 +75,7 @@ casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybooking
 
 
 var d = new Date();
-console.log(d.getHours());
+//console.log("Hours : " + d.getHours());
 if((d.getHours() >= 6) && (d.getHours() <= 8)) // use quick booking during 6-8 am in the morning
 {
     casper.thenOpen('https://members.myactivesg.com/facilities/quick-booking', function() {});
@@ -178,13 +178,11 @@ casper.waitForSelector("#payment_mode_1", function() {
 });
 
 casper.then(function() {
-    //this.click("input[name='']"); //confirm booking
-    //casper.click('input[type="submit"][name="pay"]');
-
+    casper.click('input[type="submit"][name="pay"]');
 });
 
-// casper.waitForSelector("a[href='https://members.myactivesg.com/']", function() {
-    // console.log("Confirmed booking");
-    // logImages && this.capture('stage7_confirmedBooking.png');    
-// });
+casper.waitForSelector("a[href='https://members.myactivesg.com/']", function() {
+    console.log("Confirmed booking");
+    logImages && this.capture('stage7_confirmedBooking.png');    
+});
 casper.run();
