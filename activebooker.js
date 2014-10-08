@@ -1,6 +1,6 @@
 
 var fs = require('fs');
-var credentials = JSON.parse(fs.read('credentials.json'));
+var credentials = JSON.parse(fs.read('config.json'));
 var bookingTimes = credentials.bookingTimes; // hour in 24-hour format , eg: 18 is for 6:00 pm
 
 var venue = credentials.venue;
