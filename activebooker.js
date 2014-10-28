@@ -20,7 +20,7 @@ var epochTime = bookingDate.getTime() / 1000 ;
 var logImages = true; //set to true to log images at different stages
 
 var casper = require('casper').create();
-casper.options.waitTimeout = 25000; 
+casper.options.waitTimeout = 30000; 
 //========================================================
 //********* Utility Functions *********
 
@@ -60,7 +60,7 @@ casper.start("https://members.myactivesg.com/auth", function() {
 
     console.log("Started...");
 
-    logImages && this.capture('stage1_login.png');
+    logImages && this.capture('stage1_login_'+epochTime+'.png');
     console.log("Currently @ Page : " + this.getCurrentUrl());
 
     this.fill('form#formSignin', {
@@ -68,7 +68,7 @@ casper.start("https://members.myactivesg.com/auth", function() {
         password: credentials.password
     }, true);
 
-    logImages && this.capture('stage2_formFilled.png');
+    logImages && this.capture('stage2_formFilled_'+epochTime+'.png');
 
     this.click('#btn-submit-login');
 
@@ -77,7 +77,7 @@ casper.start("https://members.myactivesg.com/auth", function() {
 // wait for the profile page to load
 casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybookings"]', function() {
 
-    logImages && this.capture('stage3_loggedIn.png');
+    logImages && this.capture('stage3_loggedIn_'+epochTime+'.png');
     console.log("Currently @ Page : " + this.getCurrentUrl());
 });
 
@@ -89,16 +89,22 @@ if((d.getHours() >= 6) && (d.getHours() <= 8)) // use quick booking during 6-8 a
     casper.thenOpen('https://members.myactivesg.com/facilities/quick-booking', function() {});
     casper.waitForSelector('select[id="activity_filter"]', function() {
         console.log(this.getCurrentUrl());
-        logImages && this.capture('facilitiesPage.png');
-        var formattedDate = bookingDate.getDay() + ', ' + bookingDate.getDate() + ' ' + m_names[bookingDate.getMonth()] + ' ' + bookingDate.getFullYear();
-        //console.log(formattedDate);
+        logImages && this.capture('facilitiesPage_'+epochTime+'.png');
+        var formattedDate = d_names[bookingDate.getDay()] + ', ' + bookingDate.getDate() + ' ' + m_names[bookingDate.getMonth()] + ' ' + bookingDate.getFullYear();
+        console.log(formattedDate);
         // fill the order details
         this.fill('form#formQuickBookSearch', {
             'activity_filter': 18,    // 18 is for badminton. May change in future
             'venue_filter': venue,   
             'date_filter': formattedDate
         },true);
-
+        
+//        this.evaluate(function() {
+//            document.querySelector('#venue_filter').value = 292; //it is obvious
+//            document.getElementById("formQuickBookSearch").submit();
+//            return true;
+//        });
+//        this.capture('screenshot_'+epochTime+'_'+epochTime+'.png');
     });
 }
 else
@@ -106,7 +112,7 @@ else
     casper.thenOpen('https://members.myactivesg.com/facilities', function() {});
     casper.waitForSelector('select[id="activity_filter"]', function() {
        console.log(this.getCurrentUrl());
-       logImages && this.capture('facilitiesPage.png');
+       logImages && this.capture('facilitiesPage_'+epochTime+'.png');
        var formattedDate = d_names[bookingDate.getDay()] + ', ' + bookingDate.getDate() + ' ' + m_names[bookingDate.getMonth()] + ' ' + bookingDate.getFullYear();
        //console.log(formattedDate);
        // fill the order details
@@ -120,12 +126,12 @@ else
     });
 }
 
-casper.waitForSelector('h3.timeslot', function() {
-   this.capture('timeSlots.png');    
+casper.waitForSelector("input[name='timeslots[]']", function() {
+   this.capture('timeSlots_'+epochTime+'.png');    
 });
 
 casper.waitForSelector('.timeslot-container', function() {
-    logImages && this.capture('stage4_slots.png');
+    logImages && this.capture('stage4_slots_'+epochTime+'.png');
     console.log("Currently @ Page : " + this.getCurrentUrl());
     var availableSlots = this.evaluate(getAvailableSlots);
 
@@ -164,7 +170,7 @@ casper.waitForSelector('.timeslot-container', function() {
 //});
 
 casper.waitForSelector("#paynow", function() {
-    logImages && this.capture('test1.png');
+    logImages && this.capture('test1_'+epochTime+'.png');
 });
 
 casper.then(function() {
@@ -175,7 +181,7 @@ casper.then(function() {
 casper.wait(1000);
 
 casper.thenOpen('https://members.myactivesg.com/cart', function() {
-    logImages && this.capture('stage5_shoppingCart.png');
+    logImages && this.capture('stage5_shoppingCart_'+epochTime+'.png');
     console.log("Currently @ Page : " + this.getCurrentUrl());
 });
 
@@ -187,15 +193,15 @@ casper.waitForSelector("#payment_mode_1", function() {
         this.sendKeys('input.wallet-password:nth-child(' + (i+1) + ')', credentials.pin[i]);
     }
     
-    logImages && this.capture('stage6_afterPin.png');
+    logImages && this.capture('stage6_afterPin_'+epochTime+'.png');
 });
 
-casper.then(function() {
-    casper.click('input[type="submit"][name="pay"]');
-});
-
-casper.waitForSelector("a[href='https://members.myactivesg.com/']", function() {
-    console.log("Confirmed booking");
-    logImages && this.capture('stage7_confirmedBooking.png');    
-});
+//casper.then(function() {
+//    casper.click('input[type="submit"][name="pay"]');
+//});
+//
+//casper.waitForSelector("a[href='https://members.myactivesg.com/']", function() {
+//    console.log("Confirmed booking");
+//    logImages && this.capture('stage7_confirmedBooking_'+epochTime+'.png');    
+//});
 casper.run();
