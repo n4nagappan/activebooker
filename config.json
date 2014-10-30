@@ -1,8 +1,5 @@
 {
-    "email": "******",
-    "password": "******",
     "pin": "******",
-    "bookingDate" : "10/22/2014",
-    "venue" : 318,
-    "bookingTimes" : [18, 19]
+    "bookingDate" : "11/14/2014",
+    "venue" : 292
 }

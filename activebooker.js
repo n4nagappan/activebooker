@@ -1,7 +1,18 @@
+var casper = require('casper').create();
+casper.options.waitTimeout = 30000; 
 
 var fs = require('fs');
 var credentials = JSON.parse(fs.read('config.json'));
-var bookingTimes = credentials.bookingTimes; // hour in 24-hour format , eg: 18 is for 6:00 pm
+var opts = casper.cli.options;
+console.log(JSON.stringify(casper.cli.options));
+if( !opts.id || !opts.password || !opts.hour)
+    console.log("Missing one of id/password/hour parameter") || casper.exit();
+
+credentials.email = opts.id;
+credentials.password = opts.password;
+
+var bookingHour = opts.hour;
+console.log("booking hour : "+ bookingHour);
 
 var venue = credentials.venue;
 console.log("venue : "+ venue);
@@ -15,14 +26,17 @@ var m_names = new Array("Jan", "Feb", "Mar",
 //bookingDate.setDate(bookingDate.getDate() + 14); // add 2 weeks
 console.log("Booking Date :" + bookingDate);
 
-//=============================================================================
+var uid = new Date().getTime();
 var epochTime = bookingDate.getTime() / 1000 ;
-var logImages = true; //set to true to log images at different stages
+var logImagesFlag = true; //set to true to log images at different stages
 
-var casper = require('casper').create();
-casper.options.waitTimeout = 30000; 
-//========================================================
 //********* Utility Functions *********
+
+function logImage(title)
+{
+    if(logImagesFlag)
+        casper.capture('images/'+title + '_' + uid+'.png');
+}
 
 function getAvailableSlots() {
     //select the available slot
@@ -60,7 +74,7 @@ casper.start("https://members.myactivesg.com/auth", function() {
 
     console.log("Started...");
 
-    logImages && this.capture('stage1_login_'+epochTime+'.png');
+    logImage('stage1_login');
     console.log("Currently @ Page : " + this.getCurrentUrl());
 
     this.fill('form#formSignin', {
@@ -68,7 +82,7 @@ casper.start("https://members.myactivesg.com/auth", function() {
         password: credentials.password
     }, true);
 
-    logImages && this.capture('stage2_formFilled_'+epochTime+'.png');
+    logImage('stage2_formFilled');
 
     this.click('#btn-submit-login');
 
@@ -77,7 +91,7 @@ casper.start("https://members.myactivesg.com/auth", function() {
 // wait for the profile page to load
 casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybookings"]', function() {
 
-    logImages && this.capture('stage3_loggedIn_'+epochTime+'.png');
+    logImage('stage3_loggedIn');
     console.log("Currently @ Page : " + this.getCurrentUrl());
 });
 
@@ -89,7 +103,7 @@ if((d.getHours() >= 6) && (d.getHours() <= 8)) // use quick booking during 6-8 a
     casper.thenOpen('https://members.myactivesg.com/facilities/quick-booking', function() {});
     casper.waitForSelector('select[id="activity_filter"]', function() {
         console.log(this.getCurrentUrl());
-        logImages && this.capture('facilitiesPage_'+epochTime+'.png');
+        logImage('stage4_facilitiesPage');
         var formattedDate = d_names[bookingDate.getDay()] + ', ' + bookingDate.getDate() + ' ' + m_names[bookingDate.getMonth()] + ' ' + bookingDate.getFullYear();
         console.log(formattedDate);
         // fill the order details
@@ -98,13 +112,6 @@ if((d.getHours() >= 6) && (d.getHours() <= 8)) // use quick booking during 6-8 a
             'venue_filter': venue,   
             'date_filter': formattedDate
         },true);
-        
-//        this.evaluate(function() {
-//            document.querySelector('#venue_filter').value = 292; //it is obvious
-//            document.getElementById("formQuickBookSearch").submit();
-//            return true;
-//        });
-//        this.capture('screenshot_'+epochTime+'_'+epochTime+'.png');
     });
 }
 else
@@ -112,7 +119,7 @@ else
     casper.thenOpen('https://members.myactivesg.com/facilities', function() {});
     casper.waitForSelector('select[id="activity_filter"]', function() {
        console.log(this.getCurrentUrl());
-       logImages && this.capture('facilitiesPage_'+epochTime+'.png');
+       logImage('stage4_facilitiesPage');
        var formattedDate = d_names[bookingDate.getDay()] + ', ' + bookingDate.getDate() + ' ' + m_names[bookingDate.getMonth()] + ' ' + bookingDate.getFullYear();
        //console.log(formattedDate);
        // fill the order details
@@ -127,25 +134,21 @@ else
 }
 
 casper.waitForSelector("input[name='timeslots[]']", function() {
-   this.capture('timeSlots_'+epochTime+'.png');    
-});
-
-casper.waitForSelector('.timeslot-container', function() {
-    logImages && this.capture('stage4_slots_'+epochTime+'.png');
+    logImage('stage5_slots');
     console.log("Currently @ Page : " + this.getCurrentUrl());
     var availableSlots = this.evaluate(getAvailableSlots);
 
     //Parse slots info
     var parsedSlots = parseSlots(availableSlots);
-    console.log("Parsed Slots : ");
-    console.log(JSON.stringify(parsedSlots, undefined, 2));
+    //console.log("Parsed Slots : ");
+    //console.log(JSON.stringify(parsedSlots, undefined, 2));
 
     //filter those slots before 8 pm
 
     var filteredSlots = Array.prototype.filter.call(parsedSlots, function(e) {
-        console.log(e.start);
+        //console.log(e.start);
         var hour = parseInt(e.start.split(":")[0]);
-        return ((bookingTimes.indexOf(hour)) > (-1));
+        return (bookingHour == hour);
     });
 
     console.log("Filtered Slots : ");
@@ -153,9 +156,13 @@ casper.waitForSelector('.timeslot-container', function() {
 
     //book courts
     if (filteredSlots.length > 0) {
-        var targetSlot = filteredSlots[0];
-        this.click("[id='" + targetSlot.id + "']");
-        console.log("Booking clicked :" + targetSlot.id);
+        for(var i = 0 ; i < filteredSlots.length && (i < 2); ++i)
+        {
+            var targetSlot = filteredSlots[i];
+            this.click("[id='" + targetSlot.id + "']");
+            logImage('stage6_selectedSlot');
+            console.log("Booking clicked :" + targetSlot.id);
+        }
     }
     else
     {
@@ -170,7 +177,7 @@ casper.waitForSelector('.timeslot-container', function() {
 //});
 
 casper.waitForSelector("#paynow", function() {
-    logImages && this.capture('test1_'+epochTime+'.png');
+    //logImage('test1');
 });
 
 casper.then(function() {
@@ -181,7 +188,7 @@ casper.then(function() {
 casper.wait(1000);
 
 casper.thenOpen('https://members.myactivesg.com/cart', function() {
-    logImages && this.capture('stage5_shoppingCart_'+epochTime+'.png');
+    logImage('stage7_shoppingCart');
     console.log("Currently @ Page : " + this.getCurrentUrl());
 });
 
@@ -193,7 +200,7 @@ casper.waitForSelector("#payment_mode_1", function() {
         this.sendKeys('input.wallet-password:nth-child(' + (i+1) + ')', credentials.pin[i]);
     }
     
-    logImages && this.capture('stage6_afterPin_'+epochTime+'.png');
+    logImage('stage8_afterPin');
 });
 
 //casper.then(function() {
@@ -202,6 +209,6 @@ casper.waitForSelector("#payment_mode_1", function() {
 //
 //casper.waitForSelector("a[href='https://members.myactivesg.com/']", function() {
 //    console.log("Confirmed booking");
-//    logImages && this.capture('stage7_confirmedBooking_'+epochTime+'.png');    
+//    logImage('stage7_confirmedBooking');
 //});
 casper.run();
