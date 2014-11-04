@@ -6,19 +6,16 @@ fs.readFile('credentials.json','utf8', function(err,data){
     var credentials = JSON.parse(data);
     console.log(credentials);
 
-    new cronJob('55 59 06 * * * ', function() {    
-        startScript(credentials[0].id,credentials[0].password,7);
-        startScript(credentials[1].id,credentials[1].password,8);
-    }, null, true);
-
-    new cronJob('58 59 06 * * * ', function() {    
-        startScript(credentials[0].id,credentials[0].password,9);
-        startScript(credentials[1].id,credentials[1].password,10);
-    }, null, true);
-
-    function startScript(id,password,hour)
+    for(var n =50 ; n<=59 ; n+=3)
     {
-        exec('"node_modules/casperjs/bin/casperjs" activebooker.js --id="' + id + '" --password="' + password + '" --hour=' + hour, function(err, stdout, stderr) {
+        new cronJob(n+' 59 06 * * * ', function() {    
+            startScript(credentials[0].id ,credentials[0].password,19 , [9,10,11,12]); //24 hour
+        }, null, true);        
+    }
+    
+    function startScript(id,password,hour,court)
+    {
+        exec('"node_modules/casperjs/bin/casperjs" activebooker.js --id="' + id + '" --password="' + password + '" --hour=' + hour +' --court='+JSON.stringify(court), function(err, stdout, stderr) {
             if(err)
             {
                 console.log("error : "+err);

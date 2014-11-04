@@ -13,6 +13,8 @@ credentials.password = opts.password;
 
 var bookingHour = opts.hour;
 console.log("booking hour : "+ bookingHour);
+var bookingCourts = JSON.parse(opts.court);
+console.log("booking courts : "+ JSON.stringify(bookingCourts));
 
 var venue = credentials.venue;
 console.log("venue : "+ venue);
@@ -35,7 +37,7 @@ var logImagesFlag = true; //set to true to log images at different stages
 function logImage(title)
 {
     if(logImagesFlag)
-        casper.capture('images/'+title + '_' + uid+'.png');
+        casper.capture('images/'+title + '_' + credentials.email + '_' + uid+'.png');
 }
 
 function getAvailableSlots() {
@@ -98,7 +100,7 @@ casper.waitForSelector('a[href="https://members.myactivesg.com/profile/mybooking
 
 var d = new Date();
 //console.log("Hours : " + d.getHours());
-if((d.getHours() >= 6) && (d.getHours() <= 8)) // use quick booking during 6-8 am in the morning
+if((d.getHours() >= 6) && (d.getHours() < 8)) // use quick booking during 6-8 am in the morning
 {
     casper.thenOpen('https://members.myactivesg.com/facilities/quick-booking', function() {});
     casper.waitForSelector('select[id="activity_filter"]', function() {
@@ -140,15 +142,16 @@ casper.waitForSelector("input[name='timeslots[]']", function() {
 
     //Parse slots info
     var parsedSlots = parseSlots(availableSlots);
-    //console.log("Parsed Slots : ");
-    //console.log(JSON.stringify(parsedSlots, undefined, 2));
+    console.log("Parsed Slots : ");
+    console.log(JSON.stringify(parsedSlots, undefined, 2));
 
     //filter those slots before 8 pm
 
     var filteredSlots = Array.prototype.filter.call(parsedSlots, function(e) {
         //console.log(e.start);
         var hour = parseInt(e.start.split(":")[0]);
-        return (bookingHour == hour);
+        var court = parseInt(e.court.split(" ")[1],10);
+        return (bookingHour == hour) && (bookingCourts.indexOf(court) != -1);
     });
 
     console.log("Filtered Slots : ");
@@ -188,7 +191,8 @@ casper.then(function() {
 casper.wait(1000);
 
 casper.thenOpen('https://members.myactivesg.com/cart', function() {
-    logImage('stage7_shoppingCart');
+    //logImage('stage7_shoppingCart');
+    casper.capture('images/stage7_shoppingCart_' + uid+'.png');
     console.log("Currently @ Page : " + this.getCurrentUrl());
 });
 
